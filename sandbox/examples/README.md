@@ -12,8 +12,8 @@ This directory contains examples demonstrating various use cases and integration
 - [playwright-integration](./playwright-integration) - Browser automation with Playwright
 - [openai-integration](./openai-integration) - OpenAI function calling with code execution
 - [langgraph-deepagents-integration](./langgraph-deepagents-integration) - LangGraph deep agent with MCP tools integration
-- [langchain-agent](./langchain-agent) - LangChain ReAct agent with sandbox integration
-- [langgraph-agent](./langgraph-agent) - LangGraph workflow-based agent with sandbox integration
+- [langchain-agent](./langchain-agent) - LangChain ReAct agent with complete sandbox integration (22 tools)
+- [langgraph-agent](./langgraph-agent) - LangGraph workflow-based agent with complete sandbox integration (22 tools)
 - [code-execute](./code-execute) - Execute code in sandbox (Jupyter and Node.js)
 
 

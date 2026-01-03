@@ -8,7 +8,10 @@
 - 🧠 **多步骤推理**: 支持理解、规划、执行、审查的完整推理流程
 - 🐍 **Python 代码执行**: 在沙箱中安全执行 Python 代码
 - 📦 **JavaScript 代码执行**: 在沙箱中安全执行 Node.js 代码
-- 📁 **文件操作**: 支持读取、写入、列出和搜索文件
+- 📁 **完整文件操作**: 读取、写入、替换、搜索、查找、列出、上传、下载
+- 💻 **Shell 命令执行**: 执行任意 shell 命令
+- 🌐 **浏览器自动化**: 导航、点击、输入、滚动、截图、分辨率设置
+- 🔗 **URL 转 Markdown**: 将网页转换为 Markdown 格式
 - 🔥 **火山云集成**: 使用 Volcengine API 提供的 DeepSeek 模型
 
 ## 前置条件
@@ -138,8 +141,24 @@ uv run main.py
 2. **execute_javascript_code**: 执行 JavaScript/Node.js 代码
 3. **read_file**: 读取文件内容
 4. **write_file**: 写入文件
-5. **list_files**: 列出目录中的文件
-6. **search_files**: 搜索文件
+5. **replace_in_file**: 替换文件中的字符串
+6. **search_in_file**: 在文件中搜索正则表达式
+7. **find_files**: 使用 glob 模式查找文件
+8. **list_directory**: 列出目录内容
+9. **upload_file**: 上传文件到沙箱
+10. **download_file**: 从沙箱下载文件
+11. **execute_shell_command**: 执行 shell 命令
+12. **create_shell_session**: 创建 shell 会话
+13. **list_shell_sessions**: 列出活跃的 shell 会话
+14. **cleanup_all_sessions**: 清理所有会话
+15. **get_browser_info**: 获取浏览器信息
+16. **take_screenshot**: 截图
+17. **browser_navigate**: 导航到 URL
+18. **browser_click**: 点击元素
+19. **browser_type**: 输入文本
+20. **browser_scroll**: 滚动页面
+21. **set_browser_resolution**: 设置浏览器分辨率
+22. **convert_to_markdown**: 将 URL 转换为 Markdown
 
 ## 程序化使用
 

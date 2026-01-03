@@ -1,3 +1,10 @@
+"""
+LangGraph Agent with complete agent-sandbox integration.
+
+This agent uses LangGraph's workflow-based architecture and integrates all sandbox tools
+including file operations, code execution, shell commands, and browser automation.
+"""
+
 import os
 import json
 from typing import List, Dict, Any, TypedDict, Annotated, Union, Optional
@@ -15,6 +22,7 @@ load_dotenv()
 
 
 class AgentState(TypedDict):
+    """State for the LangGraph agent."""
     messages: List[BaseMessage]
     current_step: str
     tool_calls: List[Dict[str, Any]]
@@ -24,6 +32,7 @@ class AgentState(TypedDict):
 
 
 class AgentStep(Enum):
+    """Steps in the agent workflow."""
     UNDERSTAND = "understand"
     PLAN = "plan"
     EXECUTE = "execute"
@@ -31,7 +40,77 @@ class AgentStep(Enum):
     ANSWER = "answer"
 
 
+# Import all tools from our comprehensive tools module
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from tools import (
+    execute_python_code,
+    execute_javascript_code,
+    read_file,
+    write_file,
+    replace_in_file,
+    search_in_file,
+    find_files,
+    list_directory,
+    upload_file,
+    download_file,
+    execute_shell_command,
+    create_shell_session,
+    list_shell_sessions,
+    cleanup_all_sessions,
+    get_browser_info,
+    take_screenshot,
+    browser_navigate,
+    browser_click,
+    browser_type,
+    browser_scroll,
+    set_browser_resolution,
+    convert_to_markdown,
+)
+
+
+# Define all available tools for the agent
+all_tools = [
+    # Code Execution
+    execute_python_code,
+    execute_javascript_code,
+    
+    # File Operations
+    read_file,
+    write_file,
+    replace_in_file,
+    search_in_file,
+    find_files,
+    list_directory,
+    upload_file,
+    download_file,
+    
+    # Shell Operations
+    execute_shell_command,
+    create_shell_session,
+    list_shell_sessions,
+    cleanup_all_sessions,
+    
+    # Browser Operations
+    get_browser_info,
+    take_screenshot,
+    browser_navigate,
+    browser_click,
+    browser_type,
+    browser_scroll,
+    set_browser_resolution,
+    
+    # Utility
+    convert_to_markdown,
+]
+
+
+tool_node = ToolNode(all_tools)
+
+
 class SandboxClient:
+    """Sandbox client wrapper."""
+    
     def __init__(self):
         self.sandbox_url = os.getenv("SANDBOX_BASE_URL", "http://localhost:8080")
         self._sandbox = None
@@ -44,106 +123,6 @@ class SandboxClient:
 
 
 sandbox_client = SandboxClient()
-
-
-@tool
-def execute_python_code(code: str) -> str:
-    """Execute Python code in the sandbox environment."""
-    result = sandbox_client.sandbox.jupyter.execute_code(code=code)
-    
-    if hasattr(result, 'data') and result.data:
-        outputs = result.data.outputs
-        if outputs:
-            output_texts = []
-            for output in outputs:
-                if hasattr(output, 'text') and output.text:
-                    output_texts.append(output.text)
-                elif hasattr(output, 'error') and output.error:
-                    output_texts.append(f"Error: {output.error}")
-            return "\n".join(output_texts) if output_texts else "Code executed successfully (no output)"
-    
-    return "Code executed successfully"
-
-
-@tool
-def execute_javascript_code(code: str) -> str:
-    """Execute JavaScript/Node.js code in the sandbox environment."""
-    result = sandbox_client.sandbox.nodejs.execute_code(code=code)
-    
-    if hasattr(result, 'data') and result.data:
-        outputs = result.data.outputs
-        if outputs:
-            output_texts = []
-            for output in outputs:
-                if hasattr(output, 'text') and output.text:
-                    output_texts.append(output.text)
-                elif hasattr(output, 'error') and output.error:
-                    output_texts.append(f"Error: {output.error}")
-            return "\n".join(output_texts) if output_texts else "Code executed successfully (no output)"
-    
-    return "Code executed successfully"
-
-
-@tool
-def read_file(file_path: str) -> str:
-    """Read the contents of a file from the sandbox."""
-    result = sandbox_client.sandbox.file.read_file(path=file_path)
-    
-    if hasattr(result, 'data') and result.data:
-        return result.data.content
-    
-    return "File not found or empty"
-
-
-@tool
-def write_file(file_path: str, content: str) -> str:
-    """Write content to a file in the sandbox."""
-    result = sandbox_client.sandbox.file.write_file(path=file_path, content=content)
-    
-    if hasattr(result, 'data') and result.data:
-        return f"Successfully wrote to {file_path}"
-    
-    return "Failed to write file"
-
-
-@tool
-def list_files(directory: str = "/tmp") -> str:
-    """List files in a directory of the sandbox."""
-    result = sandbox_client.sandbox.file.list_path(path=directory)
-    
-    if hasattr(result, 'data') and result.data:
-        files = result.data.files
-        if files:
-            file_list = [f"{f.name} ({f.type})" for f in files]
-            return "\n".join(file_list)
-    
-    return "Directory not found or empty"
-
-
-@tool
-def search_files(pattern: str, path: str = "/tmp") -> str:
-    """Search for files matching a pattern in the sandbox."""
-    result = sandbox_client.sandbox.file.find_files(path=path, pattern=pattern)
-    
-    if hasattr(result, 'data') and result.data:
-        files = result.data.files
-        if files:
-            file_list = [f"{f.name} ({f.type})" for f in files]
-            return "\n".join(file_list)
-    
-    return "No files found matching the pattern"
-
-
-tools = [
-    execute_python_code,
-    execute_javascript_code,
-    read_file,
-    write_file,
-    list_files,
-    search_files,
-]
-
-tool_node = ToolNode(tools)
 
 
 def create_llm():
@@ -339,17 +318,38 @@ def run_graph(query: str) -> Dict[str, Any]:
     return final_state
 
 
+def print_tools_info():
+    """Print all available tools."""
+    print("📦 可用工具列表:")
+    print("-" * 60)
+    
+    tool_categories = {
+        "🐍 代码执行": ["execute_python_code", "execute_javascript_code"],
+        "📁 文件操作": ["read_file", "write_file", "replace_in_file", "search_in_file", "find_files", "list_directory", "upload_file", "download_file"],
+        "💻 Shell命令": ["execute_shell_command", "create_shell_session", "list_shell_sessions", "cleanup_all_sessions"],
+        "🌐 浏览器": ["get_browser_info", "take_screenshot", "browser_navigate", "browser_click", "browser_type", "browser_scroll", "set_browser_resolution"],
+        "🔧 工具": ["convert_to_markdown"],
+    }
+    
+    for category, tool_names in tool_categories.items():
+        print(f"\n{category}:")
+        for tool_name in tool_names:
+            print(f"  • {tool_name}")
+    
+    print("\n" + "=" * 60)
+
+
 def main():
     """主入口"""
-    print("🚀 启动 LangGraph Agent...")
-    print("=" * 50)
-    print("💡 基于工作流的智能代理")
-    print("=" * 50)
+    print("🚀 启动 LangGraph Agent (完整工具集成版)...")
+    print("=" * 60)
+    
+    print_tools_info()
     
     print("\n💬 Agent 已就绪，请输入您的问题:")
-    print("   (示例: 计算 1+1, 列出 /tmp 目录, 等)")
+    print("   (示例: 计算 1+1, 列出 /tmp 目录, 执行 shell 命令, 等)")
     print("   输入 'quit' 或 'exit' 退出")
-    print("-" * 50)
+    print("-" * 60)
     
     while True:
         try:
@@ -366,10 +366,10 @@ def main():
             result = run_graph(user_input)
             
             print("\n✅ 最终结果:")
-            print("-" * 50)
+            print("-" * 60)
             if result and "final_answer" in result:
                 print(result["final_answer"])
-            print("-" * 50)
+            print("-" * 60)
             
         except KeyboardInterrupt:
             print("\n👋 再见！")

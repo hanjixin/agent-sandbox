@@ -1,3 +1,10 @@
+"""
+LangChain Agent with complete agent-sandbox integration.
+
+This agent uses LangChain's ReAct pattern and integrates all sandbox tools
+including file operations, code execution, shell commands, and browser automation.
+"""
+
 import os
 import json
 from typing import List, Dict, Any, Union
@@ -14,6 +21,8 @@ load_dotenv()
 
 
 class SandboxCallbackHandler(BaseCallbackHandler):
+    """Callback handler for sandbox operations."""
+    
     def __init__(self, sandbox: Sandbox):
         self.sandbox = sandbox
 
@@ -24,93 +33,69 @@ class SandboxCallbackHandler(BaseCallbackHandler):
         print(f"✅ 工具执行完成")
 
 
-@tool
-def execute_python_code(code: str) -> str:
-    """Execute Python code in the sandbox environment."""
-    sandbox_url = os.getenv("SANDBOX_BASE_URL", "http://localhost:8080")
-    sandbox = Sandbox(base_url=sandbox_url)
-    
-    result = sandbox.jupyter.execute_code(code=code)
-    
-    if hasattr(result, 'data') and result.data:
-        outputs = result.data.outputs
-        if outputs:
-            output_texts = []
-            for output in outputs:
-                if hasattr(output, 'text') and output.text:
-                    output_texts.append(output.text)
-                elif hasattr(output, 'error') and output.error:
-                    output_texts.append(f"Error: {output.error}")
-            return "\n".join(output_texts) if output_texts else "Code executed successfully (no output)"
-    
-    return "Code executed successfully"
+# Import all tools from our comprehensive tools module
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+from tools import (
+    execute_python_code,
+    execute_javascript_code,
+    read_file,
+    write_file,
+    replace_in_file,
+    search_in_file,
+    find_files,
+    list_directory,
+    upload_file,
+    download_file,
+    execute_shell_command,
+    create_shell_session,
+    list_shell_sessions,
+    cleanup_all_sessions,
+    get_browser_info,
+    take_screenshot,
+    browser_navigate,
+    browser_click,
+    browser_type,
+    browser_scroll,
+    set_browser_resolution,
+    convert_to_markdown,
+)
 
 
-@tool
-def execute_javascript_code(code: str) -> str:
-    """Execute JavaScript/Node.js code in the sandbox environment."""
-    sandbox_url = os.getenv("SANDBOX_BASE_URL", "http://localhost:8080")
-    sandbox = Sandbox(base_url=sandbox_url)
+# Define all available tools for the agent
+all_tools = [
+    # Code Execution
+    execute_python_code,
+    execute_javascript_code,
     
-    result = sandbox.nodejs.execute_code(code=code)
+    # File Operations
+    read_file,
+    write_file,
+    replace_in_file,
+    search_in_file,
+    find_files,
+    list_directory,
+    upload_file,
+    download_file,
     
-    if hasattr(result, 'data') and result.data:
-        outputs = result.data.outputs
-        if outputs:
-            output_texts = []
-            for output in outputs:
-                if hasattr(output, 'text') and output.text:
-                    output_texts.append(output.text)
-                elif hasattr(output, 'error') and output.error:
-                    output_texts.append(f"Error: {output.error}")
-            return "\n".join(output_texts) if output_texts else "Code executed successfully (no output)"
+    # Shell Operations
+    execute_shell_command,
+    create_shell_session,
+    list_shell_sessions,
+    cleanup_all_sessions,
     
-    return "Code executed successfully"
-
-
-@tool
-def read_file(file_path: str) -> str:
-    """Read the contents of a file from the sandbox."""
-    sandbox_url = os.getenv("SANDBOX_BASE_URL", "http://localhost:8080")
-    sandbox = Sandbox(base_url=sandbox_url)
+    # Browser Operations
+    get_browser_info,
+    take_screenshot,
+    browser_navigate,
+    browser_click,
+    browser_type,
+    browser_scroll,
+    set_browser_resolution,
     
-    result = sandbox.file.read_file(path=file_path)
-    
-    if hasattr(result, 'data') and result.data:
-        return result.data.content
-    
-    return "File not found or empty"
-
-
-@tool
-def write_file(file_path: str, content: str) -> str:
-    """Write content to a file in the sandbox."""
-    sandbox_url = os.getenv("SANDBOX_BASE_URL", "http://localhost:8080")
-    sandbox = Sandbox(base_url=sandbox_url)
-    
-    result = sandbox.file.write_file(path=file_path, content=content)
-    
-    if hasattr(result, 'data') and result.data:
-        return f"Successfully wrote to {file_path}"
-    
-    return "Failed to write file"
-
-
-@tool
-def list_files(directory: str = "/tmp") -> str:
-    """List files in a directory of the sandbox."""
-    sandbox_url = os.getenv("SANDBOX_BASE_URL", "http://localhost:8080")
-    sandbox = Sandbox(base_url=sandbox_url)
-    
-    result = sandbox.file.list_path(path=directory)
-    
-    if hasattr(result, 'data') and result.data:
-        files = result.data.files
-        if files:
-            file_list = [f"{f.name} ({f.type})" for f in files]
-            return "\n".join(file_list)
-    
-    return "Directory not found or empty"
+    # Utility
+    convert_to_markdown,
+]
 
 
 def create_llm():
@@ -133,14 +118,8 @@ def create_llm():
 
 
 def create_langchain_agent():
-    """Create a LangChain ReAct agent with sandbox tools."""
-    tools = [
-        execute_python_code,
-        execute_javascript_code,
-        read_file,
-        write_file,
-        list_files,
-    ]
+    """Create a LangChain ReAct agent with all sandbox tools."""
+    tools = all_tools
     
     llm = create_llm()
     
@@ -158,7 +137,7 @@ def create_langchain_agent():
         verbose=True,
         callbacks=[callback_handler],
         handle_parsing_errors=True,
-        max_iterations=10,
+        max_iterations=20,
     )
     
     return agent_executor
@@ -175,15 +154,32 @@ async def run_agent_query(query: str):
 
 def main():
     """Main entry point for the LangChain agent."""
-    print("🚀 启动 LangChain Agent...")
-    print("=" * 50)
+    print("🚀 启动 LangChain Agent (完整工具集成版)...")
+    print("=" * 60)
+    print("📦 可用工具列表:")
+    print("-" * 60)
+    
+    tool_categories = {
+        "🐍 代码执行": ["execute_python_code", "execute_javascript_code"],
+        "📁 文件操作": ["read_file", "write_file", "replace_in_file", "search_in_file", "find_files", "list_directory", "upload_file", "download_file"],
+        "💻 Shell命令": ["execute_shell_command", "create_shell_session", "list_shell_sessions", "cleanup_all_sessions"],
+        "🌐 浏览器": ["get_browser_info", "take_screenshot", "browser_navigate", "browser_click", "browser_type", "browser_scroll", "set_browser_resolution"],
+        "🔧 工具": ["convert_to_markdown"],
+    }
+    
+    for category, tool_names in tool_categories.items():
+        print(f"\n{category}:")
+        for tool_name in tool_names:
+            print(f"  • {tool_name}")
+    
+    print("\n" + "=" * 60)
     
     agent = create_langchain_agent()
     
     print("\n💬 Agent 已就绪，请输入您的问题:")
-    print("   (示例: 计算 1+1, 列出 /tmp 目录的文件, 等)")
+    print("   (示例: 计算 1+1, 列出 /tmp 目录的文件, 执行 shell 命令, 等)")
     print("   输入 'quit' 或 'exit' 退出")
-    print("-" * 50)
+    print("-" * 60)
     
     while True:
         try:
@@ -200,15 +196,17 @@ def main():
             result = agent.invoke({"input": user_input})
             
             print("\n✅ 结果:")
-            print("-" * 50)
+            print("-" * 60)
             print(result.get("output", "No output"))
-            print("-" * 50)
+            print("-" * 60)
             
         except KeyboardInterrupt:
             print("\n👋 再见！")
             break
         except Exception as e:
             print(f"\n❌ 错误: {e}")
+            import traceback
+            traceback.print_exc()
             print("请重试...")
 
 
