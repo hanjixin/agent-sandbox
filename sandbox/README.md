@@ -395,6 +395,117 @@ class SandboxTool(BaseTool):
         return result.data.output
 ```
 
+### LangGraph Workflow Agent (Complete Integration)
+
+Complete LangChain ReAct agent with all 22 sandbox tools:
+
+```python
+from langchain import hub
+from langchain.agents import create_react_agent, AgentExecutor
+from agent_sandbox import Sandbox
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Import all tools from comprehensive tools module
+from tools import (
+    execute_python_code, execute_javascript_code,
+    read_file, write_file, replace_in_file, search_in_file,
+    find_files, list_directory, upload_file, download_file,
+    execute_shell_command, create_shell_session, list_shell_sessions,
+    cleanup_all_sessions, get_browser_info, take_screenshot,
+    browser_navigate, browser_click, browser_type, browser_scroll,
+    set_browser_resolution, convert_to_markdown,
+)
+
+tools = [
+    execute_python_code, execute_javascript_code,
+    read_file, write_file, replace_in_file, search_in_file,
+    find_files, list_directory, upload_file, download_file,
+    execute_shell_command, create_shell_session, list_shell_sessions,
+    cleanup_all_sessions, get_browser_info, take_screenshot,
+    browser_navigate, browser_click, browser_type, browser_scroll,
+    set_browser_resolution, convert_to_markdown,
+]
+
+llm = ChatOpenAI(
+    model="deepseek-v3-2-251201",
+    base_url="https://ark.cn-beijing.volces.com/api/v3",
+    api_key=os.getenv("COZE_WORKLOAD_IDENTITY_API_KEY"),
+)
+
+prompt = hub.pull("hwchase17/react")
+agent = create_react_agent(llm, tools, prompt)
+
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=True,
+    max_iterations=20,
+)
+
+# Run agent
+result = agent_executor.invoke({"input": "Calculate 1+1 and list /tmp directory"})
+```
+
+### LangGraph Workflow Agent (Complete Integration)
+
+Complete LangGraph workflow-based agent with all 22 sandbox tools:
+
+```python
+from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from agent_sandbox import Sandbox
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Import all tools
+from tools import (
+    execute_python_code, execute_javascript_code,
+    read_file, write_file, replace_in_file, search_in_file,
+    find_files, list_directory, upload_file, download_file,
+    execute_shell_command, create_shell_session, list_shell_sessions,
+    cleanup_all_sessions, get_browser_info, take_screenshot,
+    browser_navigate, browser_click, browser_type, browser_scroll,
+    set_browser_resolution, convert_to_markdown,
+)
+
+tools = [/* all 22 tools */]
+tool_node = ToolNode(tools)
+
+class AgentState(TypedDict):
+    messages: List[BaseMessage]
+    current_step: str
+    tool_calls: List[Dict]
+    tool_results: List[Dict]
+    final_answer: str
+    iterations: int
+
+def create_workflow():
+    workflow = StateGraph(AgentState)
+    workflow.add_node("understand", understand_node)
+    workflow.add_node("plan", plan_node)
+    workflow.add_node("execute", execute_node)
+    workflow.add_node("review", review_node)
+    workflow.add_node("tools", tool_node)
+    
+    workflow.set_entry_point("understand")
+    workflow.add_edge("understand", "plan")
+    workflow.add_edge("plan", "execute")
+    workflow.add_conditional_edges("execute", should_continue, {...})
+    workflow.add_edge("tools", "review")
+    workflow.add_edge("review", "plan")
+    
+    return workflow
+
+app = create_workflow().compile()
+result = app.invoke({"messages": [HumanMessage(content="Your task")]})
+```
+
 ### OpenAI Assistant Integration
 
 ```python
